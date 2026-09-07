@@ -1,0 +1,116 @@
+name: Build Windows installer
+
+# Builds JobSearchAgentSetup.exe on GitHub's Windows runner (PyInstaller
+# has to build on the OS it targets, so this can't run on Linux/macOS).
+#
+# Triggers:
+#   - Every push to main that touches the app
+#   - Manually, any time, via the "Run workflow" button on the Actions tab
+#
+# Output: download from the run's "Artifacts" section (JobSearchAgentSetup),
+# or from the auto-created GitHub Release when you push a version tag
+# like v1.0 (see the "release" job below).
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "**.py"
+      - "templates/**"
+      - "static/**"
+      - "requirements.txt"
+      - "job_agent.spec"
+      - "installer.iss"
+      - ".github/workflows/build-windows-installer.yml"
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Download Chromium for Playwright
+        run: playwright install chromium --with-deps
+
+      - name: Build JobSearchAgent.exe with PyInstaller
+        run: pyinstaller --noconfirm --clean job_agent.spec
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer with Inno Setup
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+
+      - name: Upload standalone exe (portable, no installer)
+        uses: actions/upload-artifact@v4
+        with:
+          name: JobSearchAgent-portable-exe
+          path: dist/JobSearchAgent.exe
+          retention-days: 30
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: JobSearchAgentSetup
+          path: Output/JobSearchAgentSetup.exe
+          retention-days: 30
+
+  release:
+    # Only runs when you push a tag like v1.0 / v1.1 — turns that build
+    # into a proper GitHub Release with the installer attached, so you
+    # get a stable download link to hand to applicants instead of digging
+    # through Actions artifacts each time.
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Download Chromium for Playwright
+        run: playwright install chromium --with-deps
+
+      - name: Build JobSearchAgent.exe with PyInstaller
+        run: pyinstaller --noconfirm --clean job_agent.spec
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer with Inno Setup
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Output/JobSearchAgentSetup.exe
