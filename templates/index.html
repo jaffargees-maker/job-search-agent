@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Departures — Job Search</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="board-header">
+  <div class="board-header-main">
+    <h1>Departures</h1>
+    <p class="subtitle">Daily job search, run on demand</p>
+  </div>
+  <div class="board-header-right">
+    <button id="setupBtn" class="setup-btn">Passenger details</button>
+    <div class="board-header-clock" id="clock">--:--</div>
+  </div>
+</header>
+
+<main>
+
+  <section class="control-strip">
+    <button id="runBtn" class="run-btn">Run search</button>
+    <label class="live-toggle">
+      <input type="checkbox" id="liveCheck">
+      <span>Also submit on Greenhouse (live-apply — otherwise fills &amp; screenshots only)</span>
+    </label>
+    <div class="status-line">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Idle — no run yet today</span>
+    </div>
+  </section>
+
+  <section class="stat-strip" id="statStrip">
+    <div class="stat"><span class="stat-num" id="statFetched">—</span><span class="stat-label">listings fetched</span></div>
+    <div class="stat"><span class="stat-num" id="statMatched">—</span><span class="stat-label">matched</span></div>
+    <div class="stat"><span class="stat-num" id="statApplied">—</span><span class="stat-label">greenhouse checked</span></div>
+    <div class="stat"><span class="stat-num" id="statLinks">—</span><span class="stat-label">manual links</span></div>
+  </section>
+
+  <section class="board-section">
+    <div class="board-section-head">
+      <h2>Matches</h2>
+      <span class="board-section-sub">tap a row for the cover note</span>
+    </div>
+    <div class="board-table" id="matchesBoard">
+      <div class="board-row board-row-head">
+        <span class="col-gate">gate</span>
+        <span class="col-dest">title</span>
+        <span class="col-carrier">company</span>
+        <span class="col-src">source</span>
+        <span class="col-status">status</span>
+      </div>
+      <div class="board-empty" id="matchesEmpty">No run yet — click "Run search" above.</div>
+    </div>
+  </section>
+
+  <section class="board-section" id="linksSection" style="display:none;">
+    <div class="board-section-head">
+      <h2>Connecting services</h2>
+      <span class="board-section-sub">not auto-applied — click through and apply yourself</span>
+    </div>
+    <div class="link-groups" id="linkGroups"></div>
+  </section>
+
+  <section class="board-section">
+    <div class="board-section-head">
+      <h2>Past departures</h2>
+      <span class="board-section-sub">earlier reports</span>
+    </div>
+    <div class="history-strip" id="historyStrip">
+      <span class="board-empty">No past reports yet.</span>
+    </div>
+  </section>
+
+</main>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-inner">
+    <button class="drawer-close" id="drawerClose">&times;</button>
+    <h3 id="drawerTitle"></h3>
+    <p class="drawer-meta" id="drawerMeta"></p>
+    <pre class="drawer-note" id="drawerNote"></pre>
+  </div>
+</div>
+
+<div class="modal-overlay" id="setupOverlay">
+  <div class="modal boarding-pass">
+    <div class="modal-head">
+      <h2>Passenger details</h2>
+      <button class="modal-close" id="setupClose">&times;</button>
+    </div>
+    <p class="modal-sub">This is what the agent uses to match jobs and fill in applications. Nothing here leaves your computer.</p>
+
+    <form id="setupForm">
+      <div class="form-grid">
+        <label>Full name*
+          <input type="text" name="name" required>
+        </label>
+        <label>Email*
+          <input type="email" name="email" required>
+        </label>
+        <label>Phone
+          <input type="text" name="phone">
+        </label>
+        <label>Current location
+          <input type="text" name="current_location" placeholder="City, Country">
+        </label>
+      </div>
+
+      <label class="full-row">Resume (PDF)<span id="resumeCurrent" class="hint"></span>
+        <input type="file" name="resume" accept=".pdf,.doc,.docx">
+      </label>
+
+      <label class="full-row">Your key strengths <span class="hint">one per line — these get woven into your cover notes, in your own words</span>
+        <textarea name="key_strengths" rows="4" placeholder="e.g. 5 years in customer support across phone, chat and email&#10;Fluent in English, Urdu and Punjabi&#10;Comfortable with CRM tools and high-volume ticket queues"></textarea>
+      </label>
+
+      <div class="form-grid">
+        <label>On-site cities <span class="hint">comma-separated</span>
+          <input type="text" name="on_site_cities" placeholder="Quetta, Lahore, Karachi">
+        </label>
+        <label>Country code <span class="hint">for localizing search links, e.g. pk, us, gb</span>
+          <input type="text" name="country_code" placeholder="pk">
+        </label>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" name="include_remote" checked>
+        <span>Include remote roles</span>
+      </label>
+
+      <label class="full-row">Target job titles <span class="hint">one per line</span>
+        <textarea name="target_titles" rows="4" placeholder="Customer Service Representative&#10;Virtual Assistant&#10;Project Manager"></textarea>
+      </label>
+
+      <label class="full-row">Must-have keywords <span class="hint">one per line — jobs need at least one to score well</span>
+        <textarea name="must_have_keywords" rows="3" placeholder="customer service&#10;crm&#10;data entry"></textarea>
+      </label>
+
+      <label class="full-row">Nice-to-have keywords <span class="hint">one per line — smaller score bonus</span>
+        <textarea name="nice_to_have_keywords" rows="3" placeholder="remote&#10;kpi&#10;multilingual"></textarea>
+      </label>
+
+      <label class="full-row">Exclude keywords <span class="hint">one per line — jobs with these are dropped entirely</span>
+        <textarea name="exclude_keywords" rows="3" placeholder="software engineer&#10;devops"></textarea>
+      </label>
+
+      <label class="full-row">Languages you speak <span class="hint">comma-separated</span>
+        <input type="text" name="languages" placeholder="English, Urdu, Punjabi">
+      </label>
+
+      <div class="form-grid">
+        <label>Min score to list a match
+          <input type="number" name="min_match_score_to_report" value="35">
+        </label>
+        <label>Min score to check Greenhouse auto-apply
+          <input type="number" name="min_match_score_to_auto_apply" value="65">
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <span id="setupError" class="setup-error"></span>
+        <button type="submit" class="run-btn">Save details</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
