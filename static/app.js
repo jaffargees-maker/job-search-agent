@@ -14,6 +14,7 @@ const drawerMeta = document.getElementById("drawerMeta");
 const drawerNote = document.getElementById("drawerNote");
 
 const setupBtn = document.getElementById("setupBtn");
+const setupBtn2 = document.getElementById("setupBtn2");
 const setupOverlay = document.getElementById("setupOverlay");
 const setupClose = document.getElementById("setupClose");
 const setupForm = document.getElementById("setupForm");
@@ -41,6 +42,13 @@ function closeSetup() {
   setupError.textContent = "";
 }
 setupBtn.addEventListener("click", openSetup);
+if (setupBtn2) setupBtn2.addEventListener("click", openSetup);
+
+// Fallback: visiting the dashboard with ?setup=1 in the address bar always
+// opens the Passenger details form directly, regardless of any button.
+if (new URLSearchParams(window.location.search).has("setup")) {
+  openSetup();
+}
 setupClose.addEventListener("click", closeSetup);
 
 function fillSetupForm(config) {
