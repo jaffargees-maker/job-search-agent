@@ -111,6 +111,13 @@ main {
 .run-btn:hover { background: #ffbd5c; }
 .run-btn:disabled { background: #4a4436; color: #8b8672; cursor: not-allowed; }
 
+.setup-btn-strip {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.setup-btn-strip:hover { background: var(--accent); color: #14181f; }
+
 .live-toggle {
   display: flex;
   align-items: center;
