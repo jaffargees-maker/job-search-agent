@@ -120,11 +120,14 @@
       </label>
 
       <div class="form-grid">
-        <label>On-site cities <span class="hint">comma-separated</span>
-          <input type="text" name="on_site_cities" placeholder="Quetta, Lahore, Karachi">
+        <label class="full-row-in-grid">On-site cities <span class="hint">tick any that apply, or add your own</span>
+          <div class="tagpicker" data-field="on_site_cities" data-sep=", "></div>
+          <input type="text" name="on_site_cities" class="tagpicker-hidden">
         </label>
-        <label>Country code <span class="hint">for localizing search links, e.g. pk, us, gb</span>
-          <input type="text" name="country_code" placeholder="pk">
+        <label>Country <span class="hint">used to localize search links</span>
+          <select id="countrySelect"></select>
+          <input type="text" id="countryOther" class="tagpicker-hidden" placeholder="Type a country code, e.g. pk" style="display:none; margin-top:6px;">
+          <input type="text" name="country_code" id="countryCodeValue" class="tagpicker-hidden">
         </label>
       </div>
 
@@ -133,20 +136,24 @@
         <span>Include remote roles</span>
       </label>
 
-      <label class="full-row">Target job titles <span class="hint">one per line</span>
-        <textarea name="target_titles" rows="4" placeholder="Customer Service Representative&#10;Virtual Assistant&#10;Project Manager"></textarea>
+      <label class="full-row">Target job titles <span class="hint">tick any that apply, or add your own</span>
+        <div class="tagpicker" data-field="target_titles" data-sep="&#10;"></div>
+        <textarea name="target_titles" class="tagpicker-hidden"></textarea>
       </label>
 
-      <label class="full-row">Must-have keywords <span class="hint">one per line — jobs need at least one to score well</span>
-        <textarea name="must_have_keywords" rows="3" placeholder="customer service&#10;crm&#10;data entry"></textarea>
+      <label class="full-row">Must-have keywords <span class="hint">tick any that apply, or add your own — jobs need at least one to score well</span>
+        <div class="tagpicker" data-field="must_have_keywords" data-sep="&#10;"></div>
+        <textarea name="must_have_keywords" class="tagpicker-hidden"></textarea>
       </label>
 
-      <label class="full-row">Nice-to-have keywords <span class="hint">one per line — smaller score bonus</span>
-        <textarea name="nice_to_have_keywords" rows="3" placeholder="remote&#10;kpi&#10;multilingual"></textarea>
+      <label class="full-row">Nice-to-have keywords <span class="hint">tick any that apply, or add your own — smaller score bonus</span>
+        <div class="tagpicker" data-field="nice_to_have_keywords" data-sep="&#10;"></div>
+        <textarea name="nice_to_have_keywords" class="tagpicker-hidden"></textarea>
       </label>
 
-      <label class="full-row">Exclude keywords <span class="hint">one per line — jobs with these are dropped entirely</span>
-        <textarea name="exclude_keywords" rows="3" placeholder="software engineer&#10;devops"></textarea>
+      <label class="full-row">Exclude keywords <span class="hint">tick any that apply, or add your own — jobs with these are dropped entirely</span>
+        <div class="tagpicker" data-field="exclude_keywords" data-sep="&#10;"></div>
+        <textarea name="exclude_keywords" class="tagpicker-hidden"></textarea>
       </label>
 
       <label class="full-row">Languages you speak <span class="hint">comma-separated</span>
