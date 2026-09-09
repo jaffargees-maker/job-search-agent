@@ -470,6 +470,98 @@ input:focus, textarea:focus {
   font-size: 12px;
 }
 
+/* ---------- tag pickers (preset checkboxes + custom "Other" chips) ---------- */
+.tagpicker-hidden { display: none; }
+
+.tagpicker {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.02);
+}
+.tagpicker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+.tagpicker-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tagpicker-option input { accent-color: var(--accent); width: 14px; height: 14px; }
+
+.tagpicker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.tagpicker-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(242,169,60,0.12);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 3px 6px 3px 10px;
+  font-size: 12px;
+}
+.tagpicker-chip button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.tagpicker-add-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.tagpicker-add-row input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 3px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: var(--sans);
+}
+.tagpicker-add-row button {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tagpicker-add-row button:hover { background: var(--accent); color: #14181f; }
+
+#countrySelect {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: var(--sans);
+}
+
 @media (max-width: 640px) {
   .board-row { grid-template-columns: 50px 1fr 90px; }
   .col-carrier, .col-src { display: none; }
