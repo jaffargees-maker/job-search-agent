@@ -76,7 +76,234 @@ function fillSetupForm(config) {
   } else {
     resumeCurrent.textContent = "\u2014 no resume uploaded yet";
   }
+
+  syncAllPickersFromHiddenFields();
+  syncCountrySelectFromHiddenField();
 }
+
+/* ---------- tag pickers: preset checkboxes + custom "Other" chips ---------- */
+/* These write into the hidden <textarea>/<input> that share their field's
+   real form name, so the existing FormData-based submit and the fillSetupForm
+   population above never need to know this picker UI exists. */
+
+const TAG_PRESETS = {
+  on_site_cities: [
+    "Karachi", "Lahore", "Islamabad", "Quetta", "Peshawar", "Faisalabad",
+    "Multan", "Rawalpindi", "Dubai", "Riyadh", "Doha", "London", "New York"
+  ],
+  target_titles: [
+    "Customer Service Representative", "Customer Support Specialist",
+    "Technical Support Agent", "Virtual Assistant", "Data Entry Clerk",
+    "Sales Representative", "Telesales / Telemarketing Agent",
+    "Administrative Assistant", "Content Writer", "Social Media Manager",
+    "Graphic Designer", "Software Developer", "Accountant",
+    "HR Coordinator", "Project Manager"
+  ],
+  must_have_keywords: [
+    "customer service", "crm", "data entry", "sales", "communication skills",
+    "remote work", "ms office", "typing", "english fluency", "problem solving"
+  ],
+  nice_to_have_keywords: [
+    "remote", "kpi", "multilingual", "night shift", "weekend availability",
+    "bilingual", "flexible hours", "team player", "fast learner"
+  ],
+  exclude_keywords: [
+    "software engineer", "devops", "night shift only", "unpaid internship",
+    "commission only", "relocation required", "on-site only"
+  ],
+};
+
+function tagPickerContainers() {
+  return Array.from(document.querySelectorAll(".tagpicker[data-field]"));
+}
+
+function renderTagPickers() {
+  tagPickerContainers().forEach((container) => {
+    const field = container.dataset.field;
+    const presets = TAG_PRESETS[field] || [];
+    const grid = document.createElement("div");
+    grid.className = "tagpicker-grid";
+    presets.forEach((preset) => {
+      const label = document.createElement("label");
+      label.className = "tagpicker-option";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.value = preset;
+      input.addEventListener("change", () => syncHiddenField(field));
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(preset));
+      grid.appendChild(label);
+    });
+
+    const chips = document.createElement("div");
+    chips.className = "tagpicker-chips";
+
+    const addRow = document.createElement("div");
+    addRow.className = "tagpicker-add-row";
+    const addInput = document.createElement("input");
+    addInput.type = "text";
+    addInput.placeholder = "Add your own \u2014 press Enter";
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.textContent = "Add";
+
+    function addFromInput() {
+      const raw = addInput.value;
+      if (!raw.trim()) return;
+      raw.split(/[,\n]/).map((s) => s.trim()).filter(Boolean).forEach((val) => {
+        addChip(container, field, val);
+      });
+      addInput.value = "";
+      syncHiddenField(field);
+    }
+    addBtn.addEventListener("click", addFromInput);
+    addInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addFromInput();
+      }
+    });
+    addRow.appendChild(addInput);
+    addRow.appendChild(addBtn);
+
+    container.appendChild(grid);
+    container.appendChild(chips);
+    container.appendChild(addRow);
+  });
+}
+
+function addChip(container, field, value) {
+  const chips = container.querySelector(".tagpicker-chips");
+  // Don't add a duplicate chip, and don't add a chip for something that's
+  // already one of the preset checkboxes (check the box instead).
+  const presetMatch = Array.from(container.querySelectorAll(".tagpicker-option input"))
+    .find((cb) => cb.value.toLowerCase() === value.toLowerCase());
+  if (presetMatch) {
+    presetMatch.checked = true;
+    return;
+  }
+  const existing = Array.from(chips.querySelectorAll(".tagpicker-chip"))
+    .find((el) => el.dataset.value.toLowerCase() === value.toLowerCase());
+  if (existing) return;
+
+  const chip = document.createElement("span");
+  chip.className = "tagpicker-chip";
+  chip.dataset.value = value;
+  const label = document.createElement("span");
+  label.textContent = value;
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.textContent = "\u00d7";
+  removeBtn.addEventListener("click", () => {
+    chip.remove();
+    syncHiddenField(field);
+  });
+  chip.appendChild(label);
+  chip.appendChild(removeBtn);
+  chips.appendChild(chip);
+}
+
+function syncHiddenField(field) {
+  const container = document.querySelector(`.tagpicker[data-field="${field}"]`);
+  const hidden = setupForm.elements[field];
+  if (!container || !hidden) return;
+  const sep = container.dataset.sep === ", " ? ", " : "\n";
+  const checked = Array.from(container.querySelectorAll(".tagpicker-option input:checked")).map((cb) => cb.value);
+  const chips = Array.from(container.querySelectorAll(".tagpicker-chip")).map((el) => el.dataset.value);
+  hidden.value = [...checked, ...chips].join(sep);
+}
+
+function syncAllPickersFromHiddenFields() {
+  tagPickerContainers().forEach((container) => {
+    const field = container.dataset.field;
+    const hidden = setupForm.elements[field];
+    if (!hidden) return;
+    // Reset UI state before repopulating from the hidden field's value.
+    container.querySelectorAll(".tagpicker-option input").forEach((cb) => (cb.checked = false));
+    const chipsBox = container.querySelector(".tagpicker-chips");
+    if (chipsBox) chipsBox.innerHTML = "";
+
+    const sep = container.dataset.sep === ", " ? "," : "\n";
+    const values = (hidden.value || "")
+      .split(sep === "," ? /,/ : /\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    values.forEach((v) => addChip(container, field, v));
+  });
+}
+
+/* ---------- country select ---------- */
+
+const COUNTRIES = [
+  ["pk", "Pakistan"], ["us", "United States"], ["gb", "United Kingdom"],
+  ["ca", "Canada"], ["au", "Australia"], ["ae", "United Arab Emirates"],
+  ["sa", "Saudi Arabia"], ["qa", "Qatar"], ["in", "India"],
+  ["bd", "Bangladesh"], ["ph", "Philippines"], ["de", "Germany"],
+  ["fr", "France"], ["nl", "Netherlands"], ["ie", "Ireland"],
+  ["sg", "Singapore"], ["my", "Malaysia"], ["za", "South Africa"],
+  ["ng", "Nigeria"], ["ke", "Kenya"], ["eg", "Egypt"], ["tr", "Turkey"],
+  ["es", "Spain"], ["it", "Italy"], ["pl", "Poland"], ["nz", "New Zealand"],
+];
+
+function renderCountrySelect() {
+  const select = document.getElementById("countrySelect");
+  if (!select) return;
+  select.innerHTML = "";
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "Select country\u2026";
+  select.appendChild(blank);
+  COUNTRIES.forEach(([code, name]) => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = `${name} (${code})`;
+    select.appendChild(opt);
+  });
+  const other = document.createElement("option");
+  other.value = "__other__";
+  other.textContent = "Other \u2014 type below";
+  select.appendChild(other);
+
+  const otherInput = document.getElementById("countryOther");
+  const hidden = document.getElementById("countryCodeValue");
+
+  select.addEventListener("change", () => {
+    if (select.value === "__other__") {
+      otherInput.style.display = "";
+      otherInput.focus();
+      hidden.value = otherInput.value.trim().toLowerCase();
+    } else {
+      otherInput.style.display = "none";
+      hidden.value = select.value;
+    }
+  });
+  otherInput.addEventListener("input", () => {
+    hidden.value = otherInput.value.trim().toLowerCase();
+  });
+}
+
+function syncCountrySelectFromHiddenField() {
+  const select = document.getElementById("countrySelect");
+  const otherInput = document.getElementById("countryOther");
+  const hidden = document.getElementById("countryCodeValue");
+  if (!select || !hidden) return;
+  const code = (hidden.value || "").trim().toLowerCase();
+  const match = COUNTRIES.find(([c]) => c === code);
+  if (match) {
+    select.value = code;
+    otherInput.style.display = "none";
+  } else if (code) {
+    select.value = "__other__";
+    otherInput.value = code;
+    otherInput.style.display = "";
+  } else {
+    select.value = "";
+    otherInput.style.display = "none";
+  }
+}
+
+renderTagPickers();
+renderCountrySelect();
 
 async function loadSetup(openIfIncomplete) {
   const res = await fetch("/api/setup");
